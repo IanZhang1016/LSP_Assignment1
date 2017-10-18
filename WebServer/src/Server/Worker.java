@@ -3,6 +3,7 @@ package Server;
 import httpResponse.HttpConstants;
 import httpResponse.HttpMethods;
 
+import javax.jws.WebService;
 import java.io.*;
 import java.net.Socket;
 import java.util.Date;
@@ -51,7 +52,6 @@ class Worker extends HandleClient implements HttpConstants, Runnable {
             /* go back in wait queue if there's fewer
              * than numHandler connections.
              */
-
             s = null;
             Vector pool = HandleClient.threads;
             synchronized (pool) {
@@ -62,6 +62,7 @@ class Worker extends HandleClient implements HttpConstants, Runnable {
                     pool.addElement(this);
                 }
             }
+
         }
     }
 
@@ -190,8 +191,15 @@ class Worker extends HandleClient implements HttpConstants, Runnable {
                     send404(targ, ps);
                 }
             }
+            ps.flush();
         } finally {
-            s.close();
+            if(HandleClient.timeout != 0){
+
+            }else{
+                s.close();
+
+            }
+
         }
     }
 
@@ -213,10 +221,15 @@ class Worker extends HandleClient implements HttpConstants, Runnable {
         log("From " +s.getInetAddress().getHostAddress()+ " " + method + " " +
                 targ.getAbsolutePath()+"-->"+rCode);
 
+        ps.print("Connection: Keep-Alive");
+        ps.write(EOL);
         ps.print("Server: Personal Java WebServer");
         ps.write(EOL);
         ps.print("Date: " + (new Date()));
         ps.write(EOL);
+        ps.print("Keep-Alive: timeout=5, max=999");
+        ps.write(EOL);
+
         if (ret) {
             if (!targ.isDirectory()) {
                 ps.print("Content-length: "+targ.length());
